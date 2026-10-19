@@ -1,0 +1,117 @@
+CREATE TABLE ROLES(
+                      ID_ROL BIGSERIAL PRIMARY KEY,
+                      NOMBRE VARCHAR(50) UNIQUE NOT NULL,
+                      DESCRIPCION VARCHAR(150) NOT NULL
+);
+
+CREATE TABLE PERFIL_USUARIOS(
+                                ID_PERFIL BIGSERIAL PRIMARY KEY,
+                                NOMBRE VARCHAR(50) NOT NULL,
+                                APELLIDO_PATERNO VARCHAR(50) NOT NULL,
+                                APELLIDO_MATERNO VARCHAR(50) NOT NULL,
+                                TELEFONO VARCHAR(10) NOT NULL,
+                                DIRECCION VARCHAR(150) NOT NULL,
+                                FECHA_NACIMIENTO DATE NOT NULL,
+                                CONSTRAINT CHECK_TELEFONO CHECK (TELEFONO ~ '^[0-9]{10}$')
+    );
+
+CREATE TABLE USUARIOS(
+                         ID_USUARIO BIGSERIAL PRIMARY KEY,
+                         ID_PERFIL BIGINT UNIQUE NOT NULL REFERENCES PERFIL_USUARIOS(ID_PERFIL),
+                         NOMBRE_USUARIO VARCHAR(50) NOT NULL,
+                         PASSWORD_HASH VARCHAR(150) NOT NULL,
+                         CORREO VARCHAR(50) NOT NULL,
+                         ESTADO_USUARIO VARCHAR(50) NOT NULL
+                             CHECK (ESTADO_USUARIO IN ('ACTIVO','ELIMINADO','BLOQUEADO')),
+                         FECHA_REGISTRO TIMESTAMP NOT NULL,
+                         FECHA_ACTUALIZACION TIMESTAMP NOT NULL
+);
+
+CREATE TABLE USUARIOS_ROLES(
+                               ID_USUARIO BIGINT NOT NULL,
+                               ID_ROL BIGINT NOT NULL,
+                               PRIMARY KEY (ID_USUARIO, ID_ROL),
+                               FOREIGN KEY (ID_USUARIO) REFERENCES USUARIOS(ID_USUARIO),
+                               FOREIGN KEY (ID_ROL) REFERENCES ROLES(ID_ROL)
+);
+
+CREATE TABLE AVATARES(
+                         ID_IMAGEN BIGSERIAL PRIMARY KEY,
+                         ID_PERFIL BIGINT UNIQUE NOT NULL REFERENCES PERFIL_USUARIOS(ID_PERFIL),
+                         NOMBRE VARCHAR(100) NOT NULL,
+                         CONTENIDO BYTEA NOT NULL
+);
+
+CREATE TABLE CLIENTES(
+                         ID_CLIENTE BIGSERIAL PRIMARY KEY,
+                         NOMBRE VARCHAR(50) NOT NULL,
+                         APELLIDO_PATERNO VARCHAR(50) NOT NULL,
+                         APELLIDO_MATERNO VARCHAR(50) NOT NULL,
+                         CORREO VARCHAR(100) NOT NULL,
+                         TELEFONO VARCHAR(10) NOT NULL,
+                         DIRECCION VARCHAR(150) NOT NULL,
+                         FECHA_REGISTRO TIMESTAMP NOT NULL,
+                         FECHA_ACTUALIZACION TIMESTAMP NOT NULL,
+                         ESTADO_CLIENTE VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE CATEGORIAS(
+                           ID_CATEGORIA BIGSERIAL PRIMARY KEY,
+                           NOMBRE VARCHAR(50) NOT NULL,
+                           DESCRIPCION VARCHAR(100) NOT NULL,
+                           ESTADO_CATEGORIA VARCHAR(50)  NOT NULL,
+                           FECHA_REGISTRO TIMESTAMP NOT NULL,
+                           FECHA_ACTUALIZACION TIMESTAMP NOT NULL
+);
+
+
+CREATE TABLE PRODUCTOS(
+                          ID_PRODUCTO BIGSERIAL PRIMARY KEY,
+                          ID_CATEGORIA BIGINT NOT NULL REFERENCES CATEGORIAS(ID_CATEGORIA),
+                          SKU_PRODUCTO VARCHAR(50) NOT NULL,
+                          NOMBRE VARCHAR(100) NOT NULL,
+                          DESCRIPCION VARCHAR(150) NOT NULL,
+                          PRECIO_COMPRA NUMERIC(12,2) NOT NULL,
+                          PRECIO_VENTA NUMERIC(12,2) NOT NULL CHECK(PRECIO_VENTA > 0),
+                          STOCK INTEGER NOT NULL CHECK(STOCK >= 0),
+                          STOCK_MINIMO INTEGER NOT NULL CHECK ( STOCK_MINIMO >= 0),
+                          ESTADO_PRODUCTO VARCHAR(50) NOT NULL,
+                          FECHA_REGISTRO TIMESTAMP NOT NULL,
+                          FECHA_ACTUALIZACION TIMESTAMP NOT NULL
+);
+
+CREATE TABLE VENTAS(
+                       ID_VENTA BIGSERIAL PRIMARY KEY,
+                       ID_CLIENTE BIGINT NOT NULL REFERENCES CLIENTES(ID_CLIENTE),
+                       ID_USUARIO BIGINT NOT NULL REFERENCES USUARIOS(ID_USUARIO),
+                       FOLIO VARCHAR(20) NOT NULL UNIQUE ,
+                       FECHA_VENTA TIMESTAMP NOT NULL,
+                       DESCUENTO DECIMAL(8,2),
+                       SUBTOTAL DECIMAL(8,2) NOT NULL,
+                       IMPUESTOS DECIMAL (8,2) NOT NULL DEFAULT 0,
+                       TOTAL DECIMAL (8,2) NOT NULL DEFAULT 0,
+                       ESTADO_VENTA VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE MOVIMIENTOS_INVENTARIO(
+                                       ID_INVENTARIO BIGSERIAL PRIMARY KEY,
+                                       ID_PRODUCTO BIGINT NOT NULL REFERENCES PRODUCTOS(ID_PRODUCTO),
+                                       ID_USUARIO BIGINT NOT NULL REFERENCES USUARIOS(ID_USUARIO),
+                                       ID_VENTA BIGINT  REFERENCES VENTAS(ID_VENTA),
+                                       TIPO_MOVIMIENTO VARCHAR(50) NOT NULL,
+                                       CANTIDAD_PRODUCTO INTEGER NOT NULL,
+                                       STOCK_ANTERIOR INTEGER NOT NULL,
+                                       STOCK_ACTUAL INTEGER NOT NULL,
+                                       FECHA_REGISTRO TIMESTAMP NOT NULL,
+                                       MOTIVO VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE DETALLE_VENTAS(
+                               ID_DETALLE_VENTA BIGSERIAL PRIMARY KEY,
+                               ID_VENTA BIGINT NOT NULL REFERENCES VENTAS(ID_VENTA),
+                               ID_PRODUCTO BIGINT NOT NULL REFERENCES PRODUCTOS(ID_PRODUCTO),
+                               CANTIDAD_PRODUCTO INTEGER NOT NULL CHECK (CANTIDAD_PRODUCTO > 0),
+                               PRECIO_UNITARIO DECIMAL(8,2) NOT NULL,
+                               DESCUENTO DECIMAL(8,2),
+                               SUBTOTAL DECIMAL(8,2) NOT NULL
+);

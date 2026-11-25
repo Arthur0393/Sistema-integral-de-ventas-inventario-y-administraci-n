@@ -1,4 +1,4 @@
-package com.charly.SIVIA;
+package com.charly.sivia;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
